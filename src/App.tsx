@@ -323,7 +323,6 @@ export default function App() {
   return (
       <div className="min-h-screen w-full bg-slate-950 text-white">
         {group.status === 'WAITING_CHOICES' && <ChoicePhase group={group} userId={user.uid} />}
-        // No seu App.tsx, substitua o trecho de retorno do status 'STARTING' e 'PLAYING' por este:
 
         {group.status === 'STARTING' && (
             <div className="fixed inset-0 z-[10000] bg-indigo-600 flex flex-col items-center justify-center text-white overflow-hidden">
