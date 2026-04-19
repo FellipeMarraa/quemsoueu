@@ -1,8 +1,19 @@
-import {useState} from 'react';
+import  {useState} from 'react';
 import {db} from '../lib/firebase';
 import {doc, updateDoc} from 'firebase/firestore';
 import {CATEGORIES} from '../data/celebrities';
-import {ArrowLeft, Check, CheckCircle2, ChevronDown, Copy, Play, Search, UserPlus, Users} from 'lucide-react';
+import {
+    ArrowLeft,
+    Check,
+    CheckCircle2,
+    ChevronDown,
+    Copy,
+    Play, Plus,
+    RotateCcw,
+    Search,
+    UserPlus,
+    Users
+} from 'lucide-react';
 
 interface ChoicePhaseProps {
     group: any;
@@ -76,7 +87,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                 copied ? 'bg-emerald-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                             }`}
                         >
-                            {copied ? <><Check size={14} /> Copiado</> : <><Copy size={14} /> Copiar Link</>}
+                            {copied ? <><Check size={14} /> Copiado</> : <><Copy size={14} /> Link</>}
                         </button>
                     </div>
                 )}
@@ -85,29 +96,29 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                 <div className="flex-1 space-y-4 mb-24">
                     {otherPlayers.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-4 border border-slate-800 border-dashed">
+                            <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-4 border border-slate-800 border-dashed animate-pulse">
                                 <Users size={32} className="text-slate-700" />
                             </div>
-                            <p className="text-slate-400 font-medium">Aguardando outros jogadores...</p>
-                            <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-1">Mande o código para começar</p>
+                            <p className="text-slate-400 font-medium">Aguardando jogadores...</p>
+                            <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-1">Envie o código ou link de convite</p>
                         </div>
                     ) : (
                         otherPlayers.map((player: any) => (
                             <div key={player.id} className="relative group">
                                 <div className={`p-5 rounded-2xl border transition-all duration-300 ${
                                     player.assignedCeleb
-                                        ? 'bg-slate-900/30 border-emerald-500/20'
+                                        ? 'bg-slate-900/50 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
                                         : 'bg-slate-900 border-slate-800'
                                 }`}>
                                     <div className="flex items-center gap-4">
-                                        <div className="relative">
+                                        <div className="relative shrink-0">
                                             <img
                                                 src={player.photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.name}`}
-                                                className="w-14 h-14 rounded-full border-2 border-slate-800 shadow-xl"
+                                                className={`w-14 h-14 rounded-full border-2 transition-colors duration-300 ${player.assignedCeleb ? 'border-emerald-500' : 'border-slate-800'}`}
                                                 alt={player.name}
                                             />
                                             {player.assignedCeleb && (
-                                                <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1 border-2 border-slate-950">
+                                                <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1 border-2 border-slate-950 shadow-lg">
                                                     <CheckCircle2 size={12} className="text-white" />
                                                 </div>
                                             )}
@@ -120,28 +131,41 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                                     {player.assignedCeleb}
                                                 </div>
                                             ) : (
-                                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.1em] mt-0.5">Pendente</p>
+                                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.1em] mt-0.5">Aguardando celebridade</p>
                                             )}
                                         </div>
 
-                                        {!player.assignedCeleb && (
-                                            <button
-                                                onClick={() => setActiveSelect(activeSelect === player.id ? null : player.id)}
-                                                className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold transition-all border border-slate-700"
-                                            >
-                                                Escolher <ChevronDown size={16} className={`transition-transform duration-300 ${activeSelect === player.id ? 'rotate-180' : ''}`} />
-                                            </button>
-                                        )}
+                                        {/* Botão Dinâmico: Escolher ou Alterar */}
+                                        <button
+                                            onClick={() => setActiveSelect(activeSelect === player.id ? null : player.id)}
+                                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border shrink-0 ${
+                                                player.assignedCeleb
+                                                    ? 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
+                                                    : 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700'
+                                            }`}
+                                        >
+                                            {player.assignedCeleb ? (
+                                                <><RotateCcw size={16} /> Alterar</>
+                                            ) : (
+                                                <><Plus size={16} /> Escolher</>
+                                            )}
+                                            <ChevronDown size={14} className={`transition-transform duration-300 ${activeSelect === player.id ? 'rotate-180' : ''}`} />
+                                        </button>
                                     </div>
                                 </div>
 
-                                {/* Custom Dropdown / Seletor Shadcn Style */}
+                                {/* Custom Dropdown Seletor */}
                                 {activeSelect === player.id && (
-                                    <div className="absolute top-full left-0 right-0 z-50 mt-2 p-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-80 overflow-y-auto custom-scrollbar">
+                                    <div className="absolute top-full left-0 right-0 z-50 mt-2 p-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-80 overflow-y-auto custom-scrollbar border-indigo-500/20">
                                         <div className="sticky top-0 bg-slate-900 pb-2 border-b border-slate-800 mb-2 px-2">
                                             <div className="flex items-center gap-2 text-slate-500 py-2">
                                                 <Search size={14} />
-                                                <span className="text-[10px] font-bold uppercase tracking-widest">Lista de Celebridades</span>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Procurar..."
+                                                    className="bg-transparent border-none outline-none text-[10px] font-bold uppercase tracking-widest w-full text-slate-200"
+                                                    autoFocus
+                                                />
                                             </div>
                                         </div>
                                         {CATEGORIES.map(category => (
@@ -154,10 +178,17 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                                         <button
                                                             key={celeb.id}
                                                             onClick={() => handleAssign(player.id, celeb.name)}
-                                                            className="flex items-center px-3 py-2.5 rounded-lg text-sm text-left hover:bg-indigo-600 transition-colors font-medium group"
+                                                            className={`flex items-center px-3 py-2.5 rounded-lg text-sm text-left transition-colors font-medium group ${
+                                                                player.assignedCeleb === celeb.name
+                                                                    ? 'bg-indigo-600 text-white'
+                                                                    : 'hover:bg-slate-800 text-slate-300'
+                                                            }`}
                                                         >
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-700 mr-3 group-hover:bg-white transition-colors"></div>
+                                                            <div className={`w-1.5 h-1.5 rounded-full mr-3 transition-colors ${
+                                                                player.assignedCeleb === celeb.name ? 'bg-white' : 'bg-slate-700 group-hover:bg-indigo-400'
+                                                            }`}></div>
                                                             {celeb.name}
+                                                            {player.assignedCeleb === celeb.name && <Check size={14} className="ml-auto" />}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -179,16 +210,16 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                 disabled={!allChoicesDone || otherPlayers.length === 0}
                                 className={`w-full py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-2xl ${
                                     allChoicesDone && otherPlayers.length > 0
-                                        ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20'
-                                        : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed'
+                                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20 border-b-4 border-emerald-800'
+                                        : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed opacity-50'
                                 }`}
                             >
-                                <Play size={20} fill={allChoicesDone ? "currentColor" : "none"} />
+                                <Play size={20} fill={allChoicesDone && otherPlayers.length > 0 ? "currentColor" : "none"} />
                                 COMEÇAR RODADA
                             </button>
                         ) : (
                             <div className="w-full py-4 rounded-2xl bg-slate-900 border border-slate-800 text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">
-                                {allChoicesDone ? "Aguardando ADM..." : "Escolha as celebridades..."}
+                                {allChoicesDone ? "Aguardando ADM iniciar..." : "Aguardando escolhas..."}
                             </div>
                         )}
                     </div>
