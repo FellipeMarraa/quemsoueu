@@ -67,7 +67,8 @@ export const CATEGORIES: Category[] = [
             { id: 93, name: 'Pedro Bial' }, { id: 94, name: 'Boninho' },
             { id: 95, name: 'Tiago Leifert' }, { id: 96, name: 'Serginho Groisman' },
             { id: 97, name: 'Ratinho' }, { id: 98, name: 'Datena' },
-            { id: 99, name: 'Marcelo Rezende' }, { id: 100, name: 'Sônia Abrão' }
+            { id: 99, name: 'Marcelo Rezende' }, { id: 100, name: 'Sônia Abrão' },
+            { id: 100, name: 'Cristiano Araújo' }, { id: 100, name: 'Cristiano Araújo' }
         ]
     },
     {
