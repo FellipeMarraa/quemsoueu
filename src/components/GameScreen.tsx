@@ -1,4 +1,4 @@
-import {useEffect} from 'react';
+import {useEffect, useRef} from 'react';
 import {db} from '../lib/firebase';
 import {doc, updateDoc} from 'firebase/firestore';
 import {Square} from 'lucide-react';
@@ -11,10 +11,37 @@ interface GameScreenProps {
 export default function GameScreen({ group, userId }: GameScreenProps) {
     const me = group.members.find((m: any) => m.id === userId);
     const isAdmin = group.adminId === userId;
+    const wakeLockRef = useRef<any>(null); // Referência para o bloqueio de tela
 
-    // Forçar modo paisagem via API
+    // 1. Lógica para MANTER A TELA ACESA (Wake Lock)
     useEffect(() => {
-        const requestLandscape = async () => {
+        const requestWakeLock = async () => {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+                    console.log('Wake Lock ativo: A tela não irá apagar.');
+                }
+            } catch (err) {
+                console.error('Erro ao ativar Wake Lock:', err);
+            }
+        };
+
+        requestWakeLock();
+
+        // Limpeza ao fechar o componente ou acabar a partida
+        return () => {
+            if (wakeLockRef.current) {
+                wakeLockRef.current.release().then(() => {
+                    wakeLockRef.current = null;
+                    console.log('Wake Lock liberado.');
+                });
+            }
+        };
+    }, []);
+
+    // 2. Lógica de Rotação e Fullscreen
+    useEffect(() => {
+        const setupScreen = async () => {
             try {
                 if (document.documentElement.requestFullscreen) {
                     await document.documentElement.requestFullscreen();
@@ -26,17 +53,14 @@ export default function GameScreen({ group, userId }: GameScreenProps) {
                 console.log("Rotação automática bloqueada.");
             }
         };
-        requestLandscape();
+        setupScreen();
     }, []);
 
     const finishRound = async () => {
         if (!isAdmin) return;
 
-        // Voltamos o status para WAITING_CHOICES para uma nova rodada
-        // Ou você poderia criar um status 'RESULTS' se quiser mostrar quem ganhou
         await updateDoc(doc(db, "groups", group.id), {
             status: 'WAITING_CHOICES',
-            // Limpamos as escolhas para a próxima rodada
             members: group.members.map((m: any) => ({ ...m, assignedCeleb: "" }))
         });
 
@@ -47,8 +71,6 @@ export default function GameScreen({ group, userId }: GameScreenProps) {
 
     return (
         <div className="fixed inset-0 z-[9999] bg-indigo-600 flex items-center justify-center overflow-hidden h-screen w-screen">
-
-            {/* Container Principal com Suporte a Rotação CSS Fallback */}
             <div className="flex flex-col items-center justify-center w-full h-full p-10 portrait:rotate-90 portrait:w-[100vh] portrait:h-[100vw]">
 
                 <div className="text-center relative">
@@ -60,15 +82,14 @@ export default function GameScreen({ group, userId }: GameScreenProps) {
                         {me?.assignedCeleb || "ERRO!"}
                     </h1>
 
-                    <div className="mt-10 inline-flex items-center gap-3 rounded-full bg-white/10 px-6 py-2 backdrop-blur-md border border-white/20">
+                    <div className="mt-10 inline-flex items-center gap-3 rounded-full bg-white/10 px-6 py-2 backdrop-blur-md border border-white/20 shadow-xl">
                         <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
                         <p className="text-xs md:text-sm font-bold uppercase tracking-widest text-indigo-100">
-                            Jogo em andamento
+                            Tela sempre ativa
                         </p>
                     </div>
                 </div>
 
-                {/* BOTÃO DE FINALIZAR (Apenas ADM) */}
                 {isAdmin && (
                     <div className="absolute bottom-10 flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                         <button
@@ -78,14 +99,10 @@ export default function GameScreen({ group, userId }: GameScreenProps) {
                             <Square size={18} fill="currentColor" />
                             Finalizar Rodada
                         </button>
-                        <p className="text-[10px] text-indigo-200 font-bold uppercase tracking-tighter opacity-50">
-                            Somente você possui este controle
-                        </p>
                     </div>
                 )}
             </div>
 
-            {/* Luzes de Fundo Estéticas */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-indigo-400 rounded-full blur-[120px] opacity-20"></div>
                 <div className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-cyan-400 rounded-full blur-[120px] opacity-20"></div>
