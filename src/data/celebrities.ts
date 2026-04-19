@@ -16,7 +16,7 @@ export const CATEGORIES: Category[] = [
         title: 'Nacionais & Personagens BR',
         icon: '🇧🇷',
         items: [
-            // Reais
+            // Reais - Celebridades e Atletas
             { id: 1, name: 'Ivete Sangalo' }, { id: 2, name: 'Silvio Santos' },
             { id: 3, name: 'Neymar Jr.' }, { id: 4, name: 'Anitta' },
             { id: 5, name: 'Rodrigo Faro' }, { id: 6, name: 'Xuxa' },
@@ -42,8 +42,8 @@ export const CATEGORIES: Category[] = [
             { id: 45, name: 'Gusttavo Lima' }, { id: 46, name: 'Marília Mendonça' },
             { id: 47, name: 'Jorge Ben Jor' }, { id: 48, name: 'Caetano Veloso' },
             { id: 49, name: 'Gilberto Gil' }, { id: 50, name: 'Djavan' },
-            // Fictícios / Memes / Clássicos
-            { id: 51, name: 'Mônica (Mauricio de Sousa)' }, { id: 52, name: 'Cebolinha' },
+            // Fictícios / Desenhos / Clássicos BR
+            { id: 51, name: 'Mônica' }, { id: 52, name: 'Cebolinha' },
             { id: 53, name: 'Cascão' }, { id: 54, name: 'Magali' },
             { id: 55, name: 'Chico Bento' }, { id: 56, name: 'Sítio do Picapau Amarelo' },
             { id: 57, name: 'Emília (Boneca)' }, { id: 58, name: 'Visconde de Sabugosa' },
@@ -52,9 +52,9 @@ export const CATEGORIES: Category[] = [
             { id: 63, name: 'Didi Mocó' }, { id: 64, name: 'Vovó Mafalda' },
             { id: 65, name: 'Bozo' }, { id: 66, name: 'Galo Cego' },
             { id: 67, name: 'Caneta Azul (Manoel Gomes)' }, { id: 68, name: 'Bambam' },
-            { id: 69, name: 'Nazaré Tedesco' }, { id: 70, name: 'Carminha (Avenida Brasil)' },
+            { id: 69, name: 'Nazaré Tedesco' }, { id: 70, name: 'Carminha' },
             { id: 71, name: 'Fofão' }, { id: 72, name: 'Dollynho' },
-            { id: 73, name: 'Agostinho Carrara' }, { id: 74, name: 'Bebel (Paraíso Tropical)' },
+            { id: 73, name: 'Agostinho Carrara' }, { id: 74, name: 'Bebel (A Favorita)' },
             { id: 75, name: 'Seu Boneco' }, { id: 76, name: 'Rolando Lero' },
             { id: 77, name: 'Ciro Bottini' }, { id: 78, name: 'Gugu Liberato' },
             { id: 79, name: 'Hebe Camargo' }, { id: 80, name: 'Chacrinha' },
@@ -62,13 +62,12 @@ export const CATEGORIES: Category[] = [
             { id: 83, name: 'Menino Maluquinho' }, { id: 84, name: 'Capitão Nascimento' },
             { id: 85, name: 'Dadá Maravilha' }, { id: 86, name: 'Vampeta' },
             { id: 87, name: 'Galvão Bueno' }, { id: 88, name: 'Craque Neto' },
-            { id: 89, name: 'Vincenzo (Meme)' }, { id: 90, name: 'Inês Brasil' },
-            { id: 91, name: 'Luva de Pedreiro' }, { id: 92, name: 'Narcisa Tamborindeguy' },
-            { id: 93, name: 'Pedro Bial' }, { id: 94, name: 'Boninho' },
-            { id: 95, name: 'Tiago Leifert' }, { id: 96, name: 'Serginho Groisman' },
-            { id: 97, name: 'Ratinho' }, { id: 98, name: 'Datena' },
-            { id: 99, name: 'Marcelo Rezende' }, { id: 100, name: 'Sônia Abrão' },
-            { id: 100, name: 'Cristiano Araújo' }, { id: 100, name: 'Cristiano Araújo' }
+            { id: 89, name: 'Inês Brasil' }, { id: 90, name: 'Luva de Pedreiro' },
+            { id: 91, name: 'Narcisa Tamborindeguy' }, { id: 92, name: 'Pedro Bial' },
+            { id: 93, name: 'Ratinho' }, { id: 94, name: 'Datena' },
+            { id: 95, name: 'Sônia Abrão' }, { id: 96, name: 'Cristiano Araújo' },
+            { id: 97, name: 'Felipe Neto' }, { id: 98, name: 'Gkay' },
+            { id: 99, name: 'Virginia Fonseca' }, { id: 100, name: 'Carlinhos Maia' }
         ]
     },
     {
@@ -76,7 +75,7 @@ export const CATEGORIES: Category[] = [
         title: 'Internacionais & Fictícios',
         icon: '🌎',
         items: [
-            // Reais
+            // Astros de Hollywood e Música
             { id: 101, name: 'Leonardo DiCaprio' }, { id: 102, name: 'Beyoncé' },
             { id: 103, name: 'Tom Cruise' }, { id: 104, name: 'Taylor Swift' },
             { id: 105, name: 'Brad Pitt' }, { id: 106, name: 'Rihanna' },
@@ -89,7 +88,7 @@ export const CATEGORIES: Category[] = [
             { id: 119, name: 'Justin Bieber' }, { id: 120, name: 'Ariana Grande' },
             { id: 121, name: 'Barack Obama' }, { id: 122, name: 'Donald Trump' },
             { id: 123, name: 'Angelina Jolie' }, { id: 124, name: 'Jennifer Aniston' },
-            { id: 125, name: 'The Rock (Dwayne Johnson)' }, { id: 126, name: 'Jackie Chan' },
+            { id: 125, name: 'The Rock' }, { id: 126, name: 'Jackie Chan' },
             { id: 127, name: 'Arnold Schwarzenegger' }, { id: 128, name: 'Sylvester Stallone' },
             { id: 129, name: 'Meryl Streep' }, { id: 130, name: 'Morgan Freeman' },
             { id: 131, name: 'Robert Downey Jr.' }, { id: 132, name: 'Chris Evans' },
@@ -102,7 +101,7 @@ export const CATEGORIES: Category[] = [
             { id: 145, name: 'Kylie Jenner' }, { id: 146, name: 'Lewis Hamilton' },
             { id: 147, name: 'Usain Bolt' }, { id: 148, name: 'Mike Tyson' },
             { id: 149, name: 'Stephen Hawking' }, { id: 150, name: 'Albert Einstein' },
-            // Fictícios / Desenhos / Filmes
+            // Fictícios / Desenhos Populares
             { id: 151, name: 'Mickey Mouse' }, { id: 152, name: 'Pernalonga' },
             { id: 153, name: 'Pateta' }, { id: 154, name: 'Pato Donald' },
             { id: 155, name: 'Popeye' }, { id: 156, name: 'Olívia Palito' },
@@ -110,24 +109,29 @@ export const CATEGORIES: Category[] = [
             { id: 159, name: 'Tom & Jerry' }, { id: 160, name: 'Pica-Pau' },
             { id: 161, name: 'Homer Simpson' }, { id: 162, name: 'Bart Simpson' },
             { id: 163, name: 'Bob Esponja' }, { id: 164, name: 'Patrick Estrela' },
-            { id: 165, name: 'Shrek' }, { id: 166, name: 'Burro (do Shrek)' },
+            { id: 165, name: 'Shrek' }, { id: 166, name: 'Burro' },
             { id: 167, name: 'Batman' }, { id: 168, name: 'Superman' },
             { id: 169, name: 'Homem-Aranha' }, { id: 170, name: 'Coringa' },
             { id: 171, name: 'Darth Vader' }, { id: 172, name: 'Yoda' },
             { id: 173, name: 'Harry Potter' }, { id: 174, name: 'Hermione Granger' },
             { id: 175, name: 'Voldemort' }, { id: 176, name: 'Sherlock Holmes' },
             { id: 177, name: 'Jack Sparrow' }, { id: 178, name: 'Indiana Jones' },
-            { id: 179, name: 'James Bond (007)' }, { id: 180, name: 'Lara Croft' },
+            { id: 179, name: 'James Bond' }, { id: 180, name: 'Lara Croft' },
             { id: 181, name: 'Pikachu' }, { id: 182, name: 'Goku' },
             { id: 183, name: 'Naruto' }, { id: 184, name: 'Sailor Moon' },
-            { id: 185, name: 'Mário (Nintendo)' }, { id: 186, name: 'Sonic' },
+            { id: 185, name: 'Mário' }, { id: 186, name: 'Sonic' },
             { id: 187, name: 'Wolverine' }, { id: 188, name: 'Mulher Maravilha' },
-            { id: 189, name: 'Elsa (Frozen)' }, { id: 190, name: 'Buzz Lightyear' },
-            { id: 191, name: 'Woody (Toy Story)' }, { id: 192, name: 'Simba (Rei Leão)' },
-            { id: 193, name: 'Winnie the Pooh (Ursinho Pooh)' }, { id: 194, name: 'Garfield' },
+            { id: 189, name: 'Elsa' }, { id: 190, name: 'Buzz Lightyear' },
+            { id: 191, name: 'Woody' }, { id: 192, name: 'Simba' },
+            { id: 193, name: 'Ursinho Pooh' }, { id: 194, name: 'Garfield' },
             { id: 195, name: 'Snoopy' }, { id: 196, name: 'Hello Kitty' },
             { id: 197, name: 'Chaves' }, { id: 198, name: 'Quico' },
-            { id: 199, name: 'Seu Madruga' }, { id: 200, name: 'Chapolin Colorado' }
+            { id: 199, name: 'Seu Madruga' }, { id: 200, name: 'Chapolin Colorado' },
+            { id: 201, name: 'Chucky' }, { id: 202, name: 'Pennywise' },
+            { id: 203, name: 'Wednesday (Wandinha)' }, { id: 204, name: 'Barbie' },
+            { id: 205, name: 'Jack Skellington' }, { id: 206, name: 'Lilo & Stitch' },
+            { id: 207, name: 'Gru (Minions)' }, { id: 208, name: 'Master Chief' },
+            { id: 209, name: 'Kratos' }, { id: 210, name: 'Geralt de Rivia' }
         ]
     }
 ];
