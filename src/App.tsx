@@ -1,12 +1,19 @@
 import {useEffect, useState} from 'react';
 import {auth, db} from './lib/firebase';
 import {arrayUnion, collection, doc, getDoc, onSnapshot, query, setDoc, updateDoc, where} from 'firebase/firestore';
-import {GoogleAuthProvider, onAuthStateChanged, signInWithPopup} from 'firebase/auth';
+import {
+  browserLocalPersistence,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  setPersistence,
+  signInWithPopup,
+  signInWithRedirect
+} from 'firebase/auth';
 import {Crown, Gamepad2, Hash, LogIn, LogOut, PlayCircle, Plus, Users} from 'lucide-react';
 import ChoicePhase from './components/ChoicePhase';
 import GameScreen from './components/GameScreen';
 
-// Componente de Avatar com tratamento de erro e política de imagem do Google
+// Componente de Avatar
 const UserAvatar = ({ src, name }: { src?: string | null; name: string }) => {
   const [error, setError] = useState(false);
   const initials = name ? name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : '??';
@@ -36,6 +43,7 @@ export default function App() {
   const [group, setGroup] = useState<any>(null);
   const [userGroups, setUserGroups] = useState<any[]>([]);
   const [inputGroupId, setInputGroupId] = useState('');
+  const [inviteProcessed, setInviteProcessed] = useState(false); // 🔥 NOVO
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -61,19 +69,30 @@ export default function App() {
         setUser(userData);
         fetchUserGroups(currentUser.uid);
 
-        // --- LÓGICA DE CONVITE VIA LINK ---
-        const params = new URLSearchParams(window.location.search);
-        const inviteCode = params.get('join');
-        if (inviteCode) {
-          handleJoinByInvite(inviteCode.toUpperCase(), userData);
-        }
       } else {
         setUser(null);
       }
       setLoading(false);
     });
+
     return () => unsubAuth();
   }, []);
+
+  // 🔥 PROCESSAMENTO CORRETO DO INVITE (SEPARADO DO AUTH)
+  useEffect(() => {
+    if (!user || inviteProcessed) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const inviteCode = params.get('join');
+
+    if (inviteCode) {
+      setInviteProcessed(true);
+
+      setTimeout(() => {
+        handleJoinByInvite(inviteCode.toUpperCase(), user);
+      }, 1500);
+    }
+  }, [user, inviteProcessed]);
 
   const fetchUserGroups = (uid: string) => {
     const q = query(collection(db, "groups"), where("memberIds", "array-contains", uid));
@@ -91,13 +110,13 @@ export default function App() {
     return () => unsubGroup();
   }, [group?.id]);
 
-  // Função auxiliar para o convite automático
   const handleJoinByInvite = async (code: string, currentUser: any) => {
     const groupRef = doc(db, "groups", code);
     const groupSnap = await getDoc(groupRef);
 
     if (groupSnap.exists()) {
       const groupData = groupSnap.data();
+
       if (!groupData.memberIds.includes(currentUser.uid)) {
         await updateDoc(groupRef, {
           memberIds: arrayUnion(currentUser.uid),
@@ -109,16 +128,32 @@ export default function App() {
           })
         });
       }
+
       setGroup(groupSnap.data());
-      // Limpa a URL para remover o "?join=..."
-      window.history.replaceState({}, document.title, window.location.origin);
+
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 2000);
     }
   };
 
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
+    const isMobile = /iPhone|Android/i.test(navigator.userAgent);
+
     try {
-      await signInWithPopup(auth, provider);
+      await setPersistence(auth, browserLocalPersistence);
+
+      if (isMobile) {
+        try {
+          await signInWithPopup(auth, provider);
+        } catch {
+          await signInWithRedirect(auth, provider);
+        }
+      } else {
+        await signInWithPopup(auth, provider);
+      }
+
     } catch (error) {
       console.error("Erro no login:", error);
     }
