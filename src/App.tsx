@@ -10,10 +10,12 @@ import {
   signInWithRedirect
 } from 'firebase/auth';
 import {Crown, Gamepad2, Hash, LogIn, LogOut, PlayCircle, Plus, Users} from 'lucide-react';
-import ChoicePhase from './components/ChoicePhase';
-import GameScreen from './components/GameScreen';
 
-// Componente de Avatar
+// Importação dos componentes de fase
+import ChoicePhase from './components/ChoicePhase';
+import InGameDashboard from './components/InGameDashboard';
+
+// Componente de Avatar com tratamento de erro e política de imagem do Google
 const UserAvatar = ({ src, name }: { src?: string | null; name: string }) => {
   const [error, setError] = useState(false);
   const initials = name ? name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : '??';
@@ -37,14 +39,32 @@ const UserAvatar = ({ src, name }: { src?: string | null; name: string }) => {
   );
 };
 
+// Componente de Timer Regressivo
+const CountdownDisplay = () => {
+  const [count, setCount] = useState(5);
+
+  useEffect(() => {
+    if (count <= 0) return;
+    const timer = setTimeout(() => setCount(count - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [count]);
+
+  return (
+      <div key={count} className="text-[35vw] font-black leading-none animate-in zoom-in-50 fade-in duration-300">
+        {count > 0 ? count : "VAI!"}
+      </div>
+  );
+};
+
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [group, setGroup] = useState<any>(null);
   const [userGroups, setUserGroups] = useState<any[]>([]);
   const [inputGroupId, setInputGroupId] = useState('');
-  const [inviteProcessed, setInviteProcessed] = useState(false); // 🔥 NOVO
+  const [inviteProcessed, setInviteProcessed] = useState(false);
 
+  // 1. Monitoramento de Autenticação
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -68,7 +88,6 @@ export default function App() {
 
         setUser(userData);
         fetchUserGroups(currentUser.uid);
-
       } else {
         setUser(null);
       }
@@ -78,7 +97,7 @@ export default function App() {
     return () => unsubAuth();
   }, []);
 
-  // 🔥 PROCESSAMENTO CORRETO DO INVITE (SEPARADO DO AUTH)
+  // 2. Processamento de Convite via URL
   useEffect(() => {
     if (!user || inviteProcessed) return;
 
@@ -87,13 +106,13 @@ export default function App() {
 
     if (inviteCode) {
       setInviteProcessed(true);
-
       setTimeout(() => {
         handleJoinByInvite(inviteCode.toUpperCase(), user);
       }, 1500);
     }
   }, [user, inviteProcessed]);
 
+  // 3. Sincronização de Grupos do Usuário
   const fetchUserGroups = (uid: string) => {
     const q = query(collection(db, "groups"), where("memberIds", "array-contains", uid));
     return onSnapshot(q, (snapshot) => {
@@ -102,6 +121,7 @@ export default function App() {
     });
   };
 
+  // 4. Sincronização do Grupo Ativo
   useEffect(() => {
     if (!group?.id) return;
     const unsubGroup = onSnapshot(doc(db, "groups", group.id), (doc) => {
@@ -116,7 +136,6 @@ export default function App() {
 
     if (groupSnap.exists()) {
       const groupData = groupSnap.data();
-
       if (!groupData.memberIds.includes(currentUser.uid)) {
         await updateDoc(groupRef, {
           memberIds: arrayUnion(currentUser.uid),
@@ -128,9 +147,7 @@ export default function App() {
           })
         });
       }
-
       setGroup(groupSnap.data());
-
       setTimeout(() => {
         window.history.replaceState({}, document.title, window.location.pathname);
       }, 2000);
@@ -143,7 +160,6 @@ export default function App() {
 
     try {
       await setPersistence(auth, browserLocalPersistence);
-
       if (isMobile) {
         try {
           await signInWithPopup(auth, provider);
@@ -153,7 +169,6 @@ export default function App() {
       } else {
         await signInWithPopup(auth, provider);
       }
-
     } catch (error) {
       console.error("Erro no login:", error);
     }
@@ -219,7 +234,7 @@ export default function App() {
           <p className="mb-10 max-w-xs text-slate-400">O jogo de celebridades online.</p>
           <button
               onClick={handleGoogleLogin}
-              className="flex items-center gap-3 rounded-2xl bg-white px-10 py-4 font-bold text-black transition-all hover:bg-slate-200 active:scale-95"
+              className="flex items-center gap-3 rounded-2xl bg-white px-10 py-4 font-bold text-black transition-all hover:bg-slate-200 active:scale-95 shadow-xl"
           >
             <LogIn size={20} /> Entrar com Google
           </button>
@@ -327,40 +342,18 @@ export default function App() {
         {group.status === 'STARTING' && (
             <div className="fixed inset-0 z-[10000] bg-indigo-600 flex flex-col items-center justify-center text-white overflow-hidden">
               <div className="absolute inset-0 bg-indigo-500 animate-pulse opacity-50"></div>
-
               <div className="relative z-10 flex flex-col items-center">
-                <p className="text-xl font-black uppercase tracking-[0.4em] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  Prepare sua testa!
+                <p className="text-xl font-black uppercase tracking-[0.4em] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center p-6">
+                  Preparem seus celulares!
                 </p>
-
                 <CountdownDisplay />
               </div>
-
-              <p className="absolute bottom-10 text-indigo-200 text-xs font-bold uppercase tracking-widest">
-                Gire o celular para o lado
-              </p>
             </div>
         )}
 
         {group.status === 'PLAYING' && (
-            <GameScreen group={group} userId={user.uid} />
+            <InGameDashboard group={group} userId={user.uid} />
         )}
       </div>
   );
 }
-
-const CountdownDisplay = () => {
-  const [count, setCount] = useState(5);
-
-  useEffect(() => {
-    if (count <= 0) return;
-    const timer = setTimeout(() => setCount(count - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [count]);
-
-  return (
-      <div key={count} className="text-[35vw] font-black leading-none animate-in zoom-in-50 fade-in duration-300">
-        {count > 0 ? count : "VAI!"}
-      </div>
-  );
-};
