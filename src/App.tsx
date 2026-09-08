@@ -444,8 +444,8 @@ export default function App() {
   if (!user) {
     return (
         <div className="flex min-h-screen w-full flex-col items-center justify-center bg-slate-950 p-6 text-center">
-          <h1 className="mb-4 text-7xl font-black tracking-tighter text-white">
-            EU SOU<span className="text-indigo-500">?</span>
+          <h1 className="mb-4 text-5xl md:text-6xl font-black tracking-tighter text-white">
+            QUAL O PERSONAGEM<span className="text-indigo-500">?</span>
           </h1>
           <p className="mb-10 max-w-xs text-slate-400">O jogo de celebridades online.</p>
           <button

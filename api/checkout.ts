@@ -33,18 +33,18 @@ export default async function handler(req: any, res: any) {
                 items: [
                     {
                         id: planType,
-                        title: `Quem Sou Eu? - Plano ${planType}`,
+                        title: `Qual o Personagem? - Plano ${planType}`,
                         quantity: 1,
                         unit_price: price,
                         currency_id: 'BRL'
                     }
                 ],
                 external_reference: userId,
-                notification_url: "https://quemsoueu-celebs.vercel.app/api/webhook",
+                notification_url: "https://qual-celebs.vercel.app/api/webhook",
                 back_urls: {
-                    success: "https://quemsoueu-celebs.vercel.app/?status=success",
-                    failure: "https://quemsoueu-celebs.vercel.app/?status=error",
-                    pending: "https://quemsoueu-celebs.vercel.app/?status=pending"
+                    success: "https://qual-celebs.vercel.app/?status=success",
+                    failure: "https://qual-celebs.vercel.app/?status=error",
+                    pending: "https://qual-celebs.vercel.app/?status=pending"
                 },
                 auto_return: "approved",
             }
