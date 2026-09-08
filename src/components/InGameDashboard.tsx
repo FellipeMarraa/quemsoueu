@@ -10,9 +10,9 @@ interface InGameDashboardProps {
 }
 
 // Após esse número de acertos, a rodada finaliza sozinha e mostra o
-// resultado — fixo independente do tamanho do grupo (grupos com 3 ou
-// menos membros só chegam nesse número quando todo mundo já acertou,
-// o que já seria o fim natural da rodada de qualquer forma).
+// resultado. Limitado ao tamanho do grupo — com só 2 jogadores, por
+// exemplo, o máximo possível é 2 acertos, então usar 3 fixo nunca
+// dispararia (bug real: grupo de 2 nunca finalizava sozinho).
 const AUTO_FINISH_THRESHOLD = 3;
 
 export default function InGameDashboard({ group, userId }: InGameDashboardProps) {
@@ -43,7 +43,8 @@ export default function InGameDashboard({ group, userId }: InGameDashboardProps)
             );
 
             const guessedSoFar = updatedMembers.filter((m) => m.guessedAt).length;
-            if (guessedSoFar >= AUTO_FINISH_THRESHOLD) {
+            const threshold = Math.min(AUTO_FINISH_THRESHOLD, updatedMembers.length);
+            if (guessedSoFar >= threshold) {
                 tx.update(groupRef, { status: 'ROUND_RESULT', members: awardRoundPoints(updatedMembers) });
             } else {
                 tx.update(groupRef, { members: updatedMembers });
@@ -66,15 +67,15 @@ export default function InGameDashboard({ group, userId }: InGameDashboardProps)
         <div className="min-h-screen bg-slate-950 flex flex-col items-center p-6">
             <div className="w-full max-w-2xl flex flex-col min-h-screen">
 
-                <header className="flex items-center justify-between mb-8 py-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
+                <header className="flex items-center justify-between gap-3 mb-8 py-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400 shrink-0">
                             <Trophy size={20} />
                         </div>
-                        <div>
-                            <h2 className="text-xl font-bold leading-none truncate max-w-[200px]">{group.name || 'Em Partida'}</h2>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1">
-                                Sala: {group.id} · <span className="font-mono">{guessedCount}/{group.members.length} descobriram</span>
+                        <div className="min-w-0">
+                            <h2 className="text-xl font-bold leading-none truncate">{group.name || 'Em Partida'}</h2>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1 truncate">
+                                Sala: {group.id} · <span className="font-mono">{guessedCount}/{group.members.length}</span>
                             </p>
                         </div>
                     </div>
@@ -82,9 +83,9 @@ export default function InGameDashboard({ group, userId }: InGameDashboardProps)
                     {isAdmin && (
                         <button
                             onClick={finishGame}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5"
+                            className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5 shrink-0 whitespace-nowrap"
                         >
-                            <Square size={14} fill="currentColor" /> Finalizar Rodada
+                            <Square size={14} fill="currentColor" /> Finalizar
                         </button>
                     )}
                 </header>
