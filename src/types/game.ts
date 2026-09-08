@@ -6,6 +6,7 @@ export interface Player {
     photo?: string | null;
     assignedCeleb?: string;
     chosenForId?: string;
+    guessedAt?: number | null;
 }
 
 export interface Group {
