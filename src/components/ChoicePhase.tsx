@@ -32,6 +32,7 @@ import {
     RotateCcw,
     Search,
     Shuffle,
+    Trophy,
     UserPlus,
     Users
 } from 'lucide-react';
@@ -48,6 +49,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [isGroupPremium, setIsGroupPremium] = useState(false);
     const [lockedMessage, setLockedMessage] = useState<string | null>(null);
+    const [showRanking, setShowRanking] = useState(false);
 
     // O plano do GRUPO é sempre o de quem criou (adminId) — não o de quem
     // está escolhendo no momento. Um membro premium dentro de um grupo
@@ -83,6 +85,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
     const allChoicesDone = group.members.every((m) => m.assignedCeleb && m.assignedCeleb !== "");
     const chosenCount = group.members.filter((m) => m.assignedCeleb && m.assignedCeleb !== "").length;
     const canStart = otherPlayers.length > 0 && (group.randomMode || allChoicesDone);
+    const standings = [...group.members].sort((a, b) => (b.totalPoints ?? 0) - (a.totalPoints ?? 0));
 
     const handleCopyLink = () => {
         const inviteLink = `${window.location.origin}?join=${group.id}`;
@@ -143,14 +146,23 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
             <div className="w-full max-w-2xl p-6 flex flex-col min-h-screen">
 
                 {/* Header Superior */}
-                <header className="flex items-center justify-between mb-8">
-                    <button
-                        onClick={() => window.location.href = window.location.origin}
-                        className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all text-slate-400"
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
-                    <div className="text-right">
+                <header className="flex items-center justify-between mb-8 gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            onClick={() => window.location.href = window.location.origin}
+                            className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all text-slate-400"
+                        >
+                            <ArrowLeft size={20} />
+                        </button>
+                        <button
+                            onClick={() => setShowRanking(true)}
+                            title="Ver ranking"
+                            className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all text-amber-400"
+                        >
+                            <Trophy size={20} />
+                        </button>
+                    </div>
+                    <div className="text-right min-w-0">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">Sessão Ativa</span>
                         <h2 className="text-xl font-bold leading-none truncate max-w-[200px]">{group.name || 'Fase de Escolha'}</h2>
                         <p className="text-[10px] font-bold text-slate-500 mt-1 font-mono">
@@ -319,6 +331,34 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                 </div>
             </div>
         </div>
+
+        <Dialog open={showRanking} onOpenChange={setShowRanking}>
+            <DialogContent className="max-h-[80vh] flex flex-col p-4">
+                <DialogHeader>
+                    <DialogTitle>Placar Geral</DialogTitle>
+                    <DialogDescription>Pontos acumulados nesta sala</DialogDescription>
+                </DialogHeader>
+                <div className="overflow-y-auto flex-1 space-y-2 -mx-1 px-1">
+                    {standings.map((member, i) => (
+                        <div
+                            key={member.id}
+                            className={`flex items-center gap-3 p-3 rounded-xl border ${
+                                i === 0 ? 'bg-amber-500/5 border-amber-500/20' : 'bg-slate-900/50 border-slate-800'
+                            }`}
+                        >
+                            <span className="text-xs font-mono text-slate-500 w-5 shrink-0">{i + 1}º</span>
+                            <img
+                                src={member.photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`}
+                                className="w-8 h-8 rounded-full border border-slate-800 shrink-0"
+                                alt={member.name}
+                            />
+                            <p className="flex-1 min-w-0 text-sm font-medium truncate">{member.name}</p>
+                            <span className="text-sm font-black text-slate-300 shrink-0">{member.totalPoints ?? 0} pts</span>
+                        </div>
+                    ))}
+                </div>
+            </DialogContent>
+        </Dialog>
 
         <Dialog open={!!activeSelect} onOpenChange={(open) => !open && closeSelect()}>
             <DialogContent className="max-h-[85vh] flex flex-col p-4">
