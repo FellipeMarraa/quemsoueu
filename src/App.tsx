@@ -92,6 +92,7 @@ export default function App() {
   const [inviteProcessed, setInviteProcessed] = useState(false);
   const [groupAction, setGroupAction] = useState<{ id: string; type: 'delete' | 'leave' } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // 1. Monitoramento de Autenticação
   useEffect(() => {
@@ -178,6 +179,24 @@ export default function App() {
       }, 1500);
     }
   }, [user, inviteProcessed]);
+
+  // 2.1 Retorno do Checkout do Mercado Pago
+  useEffect(() => {
+    if (!user) return;
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    if (!status) return;
+
+    if (status === 'success') {
+      setSuccessMessage("Pagamento aprovado! Seu plano Premium já deve estar ativo.");
+    } else if (status === 'pending') {
+      setSuccessMessage("Pagamento em análise. Assim que for aprovado, seu Premium ativa automaticamente.");
+    } else {
+      setErrorMessage("Não foi possível concluir o pagamento. Tente de novo.");
+    }
+
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }, [user]);
 
   // 3. Sincronização de Grupos do Usuário
   const fetchUserGroups = (uid: string) => {
@@ -277,6 +296,23 @@ export default function App() {
       }
     } catch (error) {
       console.error("Erro no login:", error);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    if (!user) return;
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.uid, planType: 'premium' })
+      });
+      if (!res.ok) throw new Error('Falha ao criar checkout');
+      const { init_point } = await res.json();
+      window.location.href = init_point;
+    } catch (error) {
+      console.error("Erro ao iniciar checkout:", error);
+      setErrorMessage("Não foi possível iniciar o pagamento. Tente de novo.");
     }
   };
 
@@ -445,9 +481,19 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <button onClick={() => auth.signOut()} className="rounded-xl bg-slate-800 p-3 text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-all">
-                <LogOut size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                {!isPlanActive(user.plan, user.planExpiresAt) && (
+                    <button
+                        onClick={handleUpgrade}
+                        className="flex items-center gap-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-3 text-xs font-black uppercase tracking-widest text-amber-400 hover:bg-amber-500/20 transition-all"
+                    >
+                      <Crown size={14} /> Virar Premium
+                    </button>
+                )}
+                <button onClick={() => auth.signOut()} className="rounded-xl bg-slate-800 p-3 text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-all">
+                  <LogOut size={20} />
+                </button>
+              </div>
             </header>
 
             <div className="grid gap-6">
@@ -557,6 +603,18 @@ export default function App() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogAction onClick={() => setErrorMessage(null)}>Entendi</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={!!successMessage} onOpenChange={(open) => !open && setSuccessMessage(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Tudo certo!</AlertDialogTitle>
+              <AlertDialogDescription>{successMessage}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setSuccessMessage(null)}>Entendi</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
