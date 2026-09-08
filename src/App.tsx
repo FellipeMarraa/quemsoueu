@@ -523,7 +523,7 @@ export default function App() {
                   </div>
                   <input
                       placeholder="CÓDIGO"
-                      className="rounded-2xl border-none bg-slate-800 p-4 text-center font-mono text-2xl font-bold uppercase text-white focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+                      className="w-full min-w-0 rounded-2xl border-none bg-slate-800 p-4 text-center font-mono text-2xl font-bold uppercase text-white focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
                       value={inputGroupId}
                       onChange={e => setInputGroupId(e.target.value)}
                   />
@@ -615,7 +615,7 @@ export default function App() {
             </AlertDialogHeader>
             <input
                 placeholder={`Sala de ${user.name}`}
-                className="rounded-2xl border-none bg-slate-800 p-4 text-center font-bold text-white focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+                className="w-full min-w-0 rounded-2xl border-none bg-slate-800 p-4 text-center font-bold text-white focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
                 value={roomName}
                 onChange={e => setRoomName(e.target.value)}
                 autoFocus
