@@ -28,7 +28,6 @@ import ChoicePhase from './components/ChoicePhase';
 import InGameDashboard from './components/InGameDashboard';
 import type {AppUser, Group, Player} from './types/game';
 import {isPlanActive} from './lib/plan';
-import {syncPlanFromCashz} from './lib/planSync';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -151,7 +150,6 @@ export default function App() {
 
         unsubProfile = await subscribeToProfile(userRef, baseData);
         unsubGroups = fetchUserGroups(currentUser.uid);
-        syncPlanFromCashz(currentUser);
       } else {
         setUser(null);
         setUserGroups([]);
