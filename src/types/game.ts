@@ -11,6 +11,7 @@ export interface Player {
 
 export interface Group {
     id: string;
+    name?: string;
     adminId: string;
     status: GameStatus;
     memberIds: string[];

@@ -91,6 +91,8 @@ export default function App() {
   const [inputGroupId, setInputGroupId] = useState('');
   const [inviteProcessed, setInviteProcessed] = useState(false);
   const [groupAction, setGroupAction] = useState<{ id: string; type: 'delete' | 'leave' } | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [roomName, setRoomName] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -316,7 +318,7 @@ export default function App() {
     }
   };
 
-  const createGroup = async () => {
+  const createGroup = async (name: string) => {
     if (!user) return;
 
     let id = '';
@@ -333,6 +335,7 @@ export default function App() {
 
     const newGroup: Group = {
       id,
+      name: name.trim() || `Sala de ${user.name}`,
       adminId: user.uid,
       status: 'WAITING_CHOICES',
       memberIds: [user.uid],
@@ -368,6 +371,12 @@ export default function App() {
     }
 
     setGroup(newGroup);
+  };
+
+  const confirmCreateGroup = async () => {
+    await createGroup(roomName);
+    setShowCreateDialog(false);
+    setRoomName('');
   };
 
   const joinGroup = async (targetId?: string) => {
@@ -499,7 +508,7 @@ export default function App() {
             <div className="grid gap-6">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <button
-                    onClick={createGroup}
+                    onClick={() => setShowCreateDialog(true)}
                     className="flex flex-col items-center justify-center rounded-3xl border border-indigo-500/30 bg-indigo-600/10 p-8 transition-all hover:bg-indigo-600/20 group shadow-lg"
                 >
                   <Plus className="mb-2 text-indigo-400 transition-transform group-hover:scale-110" size={40} />
@@ -543,7 +552,7 @@ export default function App() {
                                 {g.id}
                               </div>
                               <div className="text-left min-w-0">
-                                <p className="font-bold text-lg leading-tight">Sala de Jogo</p>
+                                <p className="font-bold text-lg leading-tight truncate">{g.name || 'Sala de Jogo'}</p>
                                 <p className="text-sm text-slate-500">{g.members.length} Jogadores</p>
                               </div>
                             </button>
@@ -591,6 +600,29 @@ export default function App() {
               <AlertDialogAction onClick={confirmGroupAction}>
                 {groupAction?.type === 'delete' ? 'Excluir' : 'Sair'}
               </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={showCreateDialog} onOpenChange={(open) => { if (!open) { setShowCreateDialog(false); setRoomName(''); } }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Nome da Sala</AlertDialogTitle>
+              <AlertDialogDescription>
+                Dá um nome pra sua sala (opcional). Depois disso é só convidar a galera.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <input
+                placeholder={`Sala de ${user.name}`}
+                className="rounded-2xl border-none bg-slate-800 p-4 text-center font-bold text-white focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+                value={roomName}
+                onChange={e => setRoomName(e.target.value)}
+                autoFocus
+                maxLength={40}
+            />
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmCreateGroup}>Criar Sala</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

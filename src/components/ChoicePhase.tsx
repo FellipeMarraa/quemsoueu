@@ -116,7 +116,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                     </button>
                     <div className="text-right">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">Sessão Ativa</span>
-                        <h2 className="text-xl font-bold leading-none">Fase de Escolha</h2>
+                        <h2 className="text-xl font-bold leading-none truncate max-w-[200px]">{group.name || 'Fase de Escolha'}</h2>
                         <p className="text-[10px] font-bold text-slate-500 mt-1 font-mono">{chosenCount}/{group.members.length} escolheram</p>
                     </div>
                 </header>

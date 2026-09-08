@@ -58,7 +58,7 @@ export default function InGameDashboard({ group, userId }: InGameDashboardProps)
                             <Trophy size={20} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold leading-none">Em Partida</h2>
+                            <h2 className="text-xl font-bold leading-none truncate max-w-[200px]">{group.name || 'Em Partida'}</h2>
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1">
                                 Sala: {group.id} · <span className="font-mono">{guessedCount}/{group.members.length} descobriram</span>
                             </p>
