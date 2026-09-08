@@ -1,4 +1,4 @@
-export type GameStatus = 'WAITING_CHOICES' | 'STARTING' | 'PLAYING' | 'FINISHED';
+export type GameStatus = 'WAITING_CHOICES' | 'STARTING' | 'PLAYING' | 'ROUND_RESULT' | 'FINISHED';
 
 export interface Player {
     id: string;
@@ -7,6 +7,7 @@ export interface Player {
     assignedCeleb?: string;
     chosenForId?: string;
     guessedAt?: number | null;
+    totalPoints?: number;
 }
 
 export interface Group {

@@ -2,11 +2,18 @@ import {db} from '../lib/firebase';
 import {doc, runTransaction} from 'firebase/firestore';
 import {Check, PartyPopper, Square, Trophy, User} from 'lucide-react';
 import type {Group} from '../types/game';
+import {awardRoundPoints} from '../lib/scoring';
 
 interface InGameDashboardProps {
     group: Group;
     userId: string;
 }
+
+// Após esse número de acertos, a rodada finaliza sozinha e mostra o
+// resultado — fixo independente do tamanho do grupo (grupos com 3 ou
+// menos membros só chegam nesse número quando todo mundo já acertou,
+// o que já seria o fim natural da rodada de qualquer forma).
+const AUTO_FINISH_THRESHOLD = 3;
 
 export default function InGameDashboard({ group, userId }: InGameDashboardProps) {
     const isAdmin = group.adminId === userId;
@@ -16,11 +23,11 @@ export default function InGameDashboard({ group, userId }: InGameDashboardProps)
         const groupRef = doc(db, "groups", group.id);
         await runTransaction(db, async (tx) => {
             const snap = await tx.get(groupRef);
-            if (!snap.exists()) return;
+            if (!snap.exists() || (snap.data() as Group).status !== 'PLAYING') return;
             const currentMembers = (snap.data() as Group).members;
             tx.update(groupRef, {
-                status: 'WAITING_CHOICES',
-                members: currentMembers.map((m) => ({ ...m, assignedCeleb: "", guessedAt: null }))
+                status: 'ROUND_RESULT',
+                members: awardRoundPoints(currentMembers)
             });
         });
     };
@@ -29,11 +36,18 @@ export default function InGameDashboard({ group, userId }: InGameDashboardProps)
         const groupRef = doc(db, "groups", group.id);
         await runTransaction(db, async (tx) => {
             const snap = await tx.get(groupRef);
-            if (!snap.exists()) return;
+            if (!snap.exists() || (snap.data() as Group).status !== 'PLAYING') return;
             const currentMembers = (snap.data() as Group).members;
-            tx.update(groupRef, {
-                members: currentMembers.map((m) => m.id === userId ? { ...m, guessedAt: Date.now() } : m)
-            });
+            const updatedMembers = currentMembers.map((m) =>
+                m.id === userId ? { ...m, guessedAt: Date.now() } : m
+            );
+
+            const guessedSoFar = updatedMembers.filter((m) => m.guessedAt).length;
+            if (guessedSoFar >= AUTO_FINISH_THRESHOLD) {
+                tx.update(groupRef, { status: 'ROUND_RESULT', members: awardRoundPoints(updatedMembers) });
+            } else {
+                tx.update(groupRef, { members: updatedMembers });
+            }
         });
     };
 
@@ -70,7 +84,7 @@ export default function InGameDashboard({ group, userId }: InGameDashboardProps)
                             onClick={finishGame}
                             className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5"
                         >
-                            <Square size={14} fill="currentColor" /> Finalizar
+                            <Square size={14} fill="currentColor" /> Finalizar Rodada
                         </button>
                     )}
                 </header>

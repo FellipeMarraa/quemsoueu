@@ -26,6 +26,7 @@ import {Crown, DoorOpen, Gamepad2, Hash, LogIn, LogOut, PlayCircle, Plus, Trash2
 // Importação dos componentes de fase
 import ChoicePhase from './components/ChoicePhase';
 import InGameDashboard from './components/InGameDashboard';
+import RoundResult from './components/RoundResult';
 import type {AppUser, Group, Player} from './types/game';
 import {isPlanActive} from './lib/plan';
 import {
@@ -473,10 +474,10 @@ export default function App() {
         <div className="min-h-screen w-full bg-slate-950 text-white p-4 md:p-8 flex flex-col items-center overflow-y-auto">
           <div className="w-full max-w-2xl">
             <header className="mb-10 flex items-center justify-between rounded-3xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 min-w-0">
                 <UserAvatar src={user.photo} name={user.name} />
-                <div>
-                  <h2 className="text-xl font-bold leading-tight">{user.name}</h2>
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold leading-tight truncate">{user.name}</h2>
                   <div className="flex items-center gap-2">
                     {isPlanActive(user.plan, user.planExpiresAt) ? (
                         <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-amber-400">
@@ -490,11 +491,11 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {!isPlanActive(user.plan, user.planExpiresAt) && (
                     <button
                         onClick={handleUpgrade}
-                        className="flex items-center gap-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-3 text-xs font-black uppercase tracking-widest text-amber-400 hover:bg-amber-500/20 transition-all"
+                        className="flex items-center gap-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-3 text-xs font-black uppercase tracking-widest text-amber-400 hover:bg-amber-500/20 transition-all whitespace-nowrap"
                     >
                       <Crown size={14} /> Virar Premium
                     </button>
@@ -672,6 +673,10 @@ export default function App() {
 
         {group.status === 'PLAYING' && (
             <InGameDashboard group={group} userId={user.uid} />
+        )}
+
+        {group.status === 'ROUND_RESULT' && (
+            <RoundResult group={group} userId={user.uid} />
         )}
       </div>
   );

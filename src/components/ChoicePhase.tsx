@@ -179,12 +179,12 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                 : 'bg-slate-900/50 border-slate-800'
                         }`}
                     >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                             <div className={`p-2 rounded-lg shrink-0 ${group.randomMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-800 text-slate-500'}`}>
                                 <Dices size={20} />
                             </div>
-                            <div>
-                                <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">Sorteio Automático</p>
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-300 uppercase tracking-wider truncate">Sorteio Automático</p>
                                 <p className="text-[10px] text-slate-500 mt-0.5">Ao iniciar, cada jogador recebe um personagem aleatório</p>
                             </div>
                         </div>
