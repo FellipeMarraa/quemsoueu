@@ -17,10 +17,15 @@ if (!admin.apps.length) {
     }
 }
 
-// Único endpoint chamado cross-origin (criminal-minds.vercel.app -> este
-// domínio) — CORS restrito à origem exata, nunca "*", já que a resposta
-// carrega status de plano.
-const ALLOWED_ORIGIN = "https://criminal-minds.vercel.app";
+// Único endpoint chamado cross-origin (criminal-minds -> este domínio) —
+// CORS restrito a uma allowlist exata, nunca "*", já que a resposta carrega
+// status de plano. Inclui localhost pra dar pra testar o SSO/sync em dev
+// sem precisar de deploy; nunca ecoa uma origem fora da lista.
+const ALLOWED_ORIGINS = [
+    "https://criminal-minds.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+];
 
 function isPlanActive(plan: string | undefined, planExpiresAt: string | null | undefined): boolean {
     if (!plan || !['premium', 'annual'].includes(plan)) return false;
@@ -29,7 +34,11 @@ function isPlanActive(plan: string | undefined, planExpiresAt: string | null | u
 }
 
 export default async function handler(req: any, res: any) {
-    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+    const origin = req.headers.origin;
+    if (ALLOWED_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Vary', 'Origin');
+    }
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
 
