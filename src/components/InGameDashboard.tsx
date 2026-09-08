@@ -1,30 +1,31 @@
-import {useState} from 'react';
 import {db} from '../lib/firebase';
-import {doc, updateDoc} from 'firebase/firestore';
-import {Eye, EyeOff, Square, Trophy, User} from 'lucide-react';
+import {doc, runTransaction} from 'firebase/firestore';
+import {Square, Trophy, User} from 'lucide-react';
+import type {Group} from '../types/game';
 
 interface InGameDashboardProps {
-    group: any;
+    group: Group;
     userId: string;
 }
 
 export default function InGameDashboard({ group, userId }: InGameDashboardProps) {
     const isAdmin = group.adminId === userId;
-    const [visibleNames, setVisibleNames] = useState<Record<string, boolean>>({});
-
-    const toggleVisibility = (id: string) => {
-        setVisibleNames(prev => ({ ...prev, [id]: !prev[id] }));
-    };
 
     const finishGame = async () => {
         if (!isAdmin) return;
-        await updateDoc(doc(db, "groups", group.id), {
-            status: 'WAITING_CHOICES',
-            members: group.members.map((m: any) => ({ ...m, assignedCeleb: "" }))
+        const groupRef = doc(db, "groups", group.id);
+        await runTransaction(db, async (tx) => {
+            const snap = await tx.get(groupRef);
+            if (!snap.exists()) return;
+            const currentMembers = (snap.data() as Group).members;
+            tx.update(groupRef, {
+                status: 'WAITING_CHOICES',
+                members: currentMembers.map((m) => ({ ...m, assignedCeleb: "" }))
+            });
         });
     };
 
-    const displayMembers = group.members.filter((m: any) => m.id !== userId);
+    const displayMembers = group.members.filter((m) => m.id !== userId);
 
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col items-center p-6">
@@ -53,47 +54,30 @@ export default function InGameDashboard({ group, userId }: InGameDashboardProps)
 
                 <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-4 mb-8 text-center">
                     <p className="text-sm text-indigo-300 font-medium">
-                        Nomes dos outros jogadores <br/>
-                        <span className="text-[10px] uppercase opacity-70">Clique no olho para revelar</span>
+                        Personagens dos outros jogadores <br/>
+                        <span className="text-[10px] uppercase opacity-70">Faça perguntas de sim ou não pra eles descobrirem o deles</span>
                     </p>
                 </div>
 
                 <div className="flex-1 space-y-4 mb-10">
-                    {displayMembers.map((member: any) => (
+                    {displayMembers.map((member) => (
                         <div
                             key={member.id}
-                            className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex items-center justify-between gap-4 transition-all hover:border-slate-700 shadow-xl"
+                            className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex items-center gap-4 transition-all hover:border-slate-700 shadow-xl"
                         >
-                            <div className="flex items-center gap-4 min-w-0">
-                                <img
-                                    src={member.photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`}
-                                    className="w-12 h-12 rounded-full border-2 border-slate-800"
-                                    alt={member.name}
-                                />
-                                <div className="min-w-0">
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-tighter truncate">
-                                        {member.name}
-                                    </p>
-                                    <div className="relative mt-1">
-                                        <p className={`text-xl font-black uppercase tracking-tight transition-all duration-300 ${
-                                            visibleNames[member.id] ? 'blur-0 opacity-100' : 'blur-md opacity-20 select-none'
-                                        }`}>
-                                            {member.assignedCeleb || "???"}
-                                        </p>
-                                    </div>
-                                </div>
+                            <img
+                                src={member.photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`}
+                                className="w-12 h-12 rounded-full border-2 border-slate-800"
+                                alt={member.name}
+                            />
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-tighter truncate">
+                                    {member.name}
+                                </p>
+                                <p className="text-xl font-black uppercase tracking-tight mt-1">
+                                    {member.assignedCeleb || "???"}
+                                </p>
                             </div>
-
-                            <button
-                                onClick={() => toggleVisibility(member.id)}
-                                className={`p-4 rounded-2xl transition-all ${
-                                    visibleNames[member.id]
-                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-                                        : 'bg-slate-800 text-slate-400 hover:text-white'
-                                }`}
-                            >
-                                {visibleNames[member.id] ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
                         </div>
                     ))}
 

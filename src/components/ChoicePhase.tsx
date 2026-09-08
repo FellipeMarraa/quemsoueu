@@ -1,7 +1,8 @@
 import  {useState} from 'react';
 import {db} from '../lib/firebase';
-import {doc, updateDoc} from 'firebase/firestore';
-import {CATEGORIES} from '../data/celebrities';
+import {doc, runTransaction, updateDoc} from 'firebase/firestore';
+import {ALL_CELEBS, CATEGORIES} from '../data/celebrities';
+import type {Group} from '../types/game';
 import {
     ArrowLeft,
     Check,
@@ -11,12 +12,13 @@ import {
     Play, Plus,
     RotateCcw,
     Search,
+    Shuffle,
     UserPlus,
     Users
 } from 'lucide-react';
 
 interface ChoicePhaseProps {
-    group: any;
+    group: Group;
     userId: string;
 }
 
@@ -24,9 +26,24 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
     const isAdmin = group.adminId === userId;
     const [copied, setCopied] = useState(false);
     const [activeSelect, setActiveSelect] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const otherPlayers = group.members.filter((m: any) => m.id !== userId);
-    const allChoicesDone = group.members.every((m: any) => m.assignedCeleb && m.assignedCeleb !== "");
+    const toggleSelect = (playerId: string) => {
+        setActiveSelect(prev => prev === playerId ? null : playerId);
+        setSearchTerm('');
+    };
+
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const filteredCategories = CATEGORIES
+        .map(category => ({
+            ...category,
+            items: category.items.filter(celeb => celeb.name.toLowerCase().includes(normalizedSearch))
+        }))
+        .filter(category => category.items.length > 0);
+
+    const otherPlayers = group.members.filter((m) => m.id !== userId);
+    const allChoicesDone = group.members.every((m) => m.assignedCeleb && m.assignedCeleb !== "");
+    const chosenCount = group.members.filter((m) => m.assignedCeleb && m.assignedCeleb !== "").length;
 
     const handleCopyLink = () => {
         const inviteLink = `${window.location.origin}?join=${group.id}`;
@@ -36,19 +53,27 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
     };
 
     const handleAssign = async (targetId: string, celebName: string) => {
-        const newMembers = group.members.map((m: any) =>
-            m.id === targetId ? { ...m, assignedCeleb: celebName } : m
-        );
-        await updateDoc(doc(db, "groups", group.id), { members: newMembers });
+        const groupRef = doc(db, "groups", group.id);
+        await runTransaction(db, async (tx) => {
+            const snap = await tx.get(groupRef);
+            if (!snap.exists()) return;
+            const currentMembers = (snap.data() as Group).members;
+            const newMembers = currentMembers.map((m) =>
+                m.id === targetId ? { ...m, assignedCeleb: celebName } : m
+            );
+            tx.update(groupRef, { members: newMembers });
+        });
         setActiveSelect(null);
+    };
+
+    const handleRandomAssign = (targetId: string) => {
+        const randomCeleb = ALL_CELEBS[Math.floor(Math.random() * ALL_CELEBS.length)];
+        handleAssign(targetId, randomCeleb.name);
     };
 
     const startCountdown = async () => {
         if (!allChoicesDone) return;
-        await updateDoc(doc(db, "groups", group.id), { status: 'STARTING' });
-        setTimeout(async () => {
-            await updateDoc(doc(db, "groups", group.id), { status: 'PLAYING' });
-        }, 5000);
+        await updateDoc(doc(db, "groups", group.id), { status: 'STARTING', startingAt: Date.now() });
     };
 
     return (
@@ -66,6 +91,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                     <div className="text-right">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">Sessão Ativa</span>
                         <h2 className="text-xl font-bold leading-none">Fase de Escolha</h2>
+                        <p className="text-[10px] font-bold text-slate-500 mt-1 font-mono">{chosenCount}/{group.members.length} escolheram</p>
                     </div>
                 </header>
 
@@ -103,7 +129,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                             <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-1">Envie o código ou link de convite</p>
                         </div>
                     ) : (
-                        otherPlayers.map((player: any) => (
+                        otherPlayers.map((player) => (
                             <div key={player.id} className="relative group">
                                 <div className={`p-5 rounded-2xl border transition-all duration-300 ${
                                     player.assignedCeleb
@@ -135,22 +161,32 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                             )}
                                         </div>
 
-                                        {/* Botão Dinâmico: Escolher ou Alterar */}
-                                        <button
-                                            onClick={() => setActiveSelect(activeSelect === player.id ? null : player.id)}
-                                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border shrink-0 ${
-                                                player.assignedCeleb
-                                                    ? 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
-                                                    : 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700'
-                                            }`}
-                                        >
-                                            {player.assignedCeleb ? (
-                                                <><RotateCcw size={16} /> Alterar</>
-                                            ) : (
-                                                <><Plus size={16} /> Escolher</>
-                                            )}
-                                            <ChevronDown size={14} className={`transition-transform duration-300 ${activeSelect === player.id ? 'rotate-180' : ''}`} />
-                                        </button>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                                onClick={() => handleRandomAssign(player.id)}
+                                                title="Escolher aleatoriamente"
+                                                className="p-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
+                                            >
+                                                <Shuffle size={16} />
+                                            </button>
+
+                                            {/* Botão Dinâmico: Escolher ou Alterar */}
+                                            <button
+                                                onClick={() => toggleSelect(player.id)}
+                                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                                                    player.assignedCeleb
+                                                        ? 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
+                                                        : 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700'
+                                                }`}
+                                            >
+                                                {player.assignedCeleb ? (
+                                                    <><RotateCcw size={16} /> Alterar</>
+                                                ) : (
+                                                    <><Plus size={16} /> Escolher</>
+                                                )}
+                                                <ChevronDown size={14} className={`transition-transform duration-300 ${activeSelect === player.id ? 'rotate-180' : ''}`} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -165,10 +201,15 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                                     placeholder="Procurar..."
                                                     className="bg-transparent border-none outline-none text-[10px] font-bold uppercase tracking-widest w-full text-slate-200"
                                                     autoFocus
+                                                    value={searchTerm}
+                                                    onChange={e => setSearchTerm(e.target.value)}
                                                 />
                                             </div>
                                         </div>
-                                        {CATEGORIES.map(category => (
+                                        {filteredCategories.length === 0 && (
+                                            <p className="px-3 py-6 text-center text-xs text-slate-500">Nenhuma celebridade encontrada.</p>
+                                        )}
+                                        {filteredCategories.map(category => (
                                             <div key={category.id} className="mb-4">
                                                 <div className="px-3 py-1.5 text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] flex items-center gap-2">
                                                     <span>{category.icon}</span> {category.title}
