@@ -1,14 +1,25 @@
-import  {useState} from 'react';
+import  {useEffect, useState} from 'react';
 import {db} from '../lib/firebase';
-import {doc, runTransaction, updateDoc} from 'firebase/firestore';
-import {ALL_CELEBS, CATEGORIES} from '../data/celebrities';
-import type {Group} from '../types/game';
+import {doc, onSnapshot, runTransaction, updateDoc} from 'firebase/firestore';
+import {ALL_CELEBS, CATEGORIES, FREE_CELEBS} from '../data/celebrities';
+import type {AppUser, Group} from '../types/game';
+import {isPlanActive} from '../lib/plan';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+} from './ui/alert-dialog';
 import {
     ArrowLeft,
     Check,
     CheckCircle2,
     ChevronDown,
     Copy,
+    Lock,
     Play, Plus,
     RotateCcw,
     Search,
@@ -27,6 +38,19 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
     const [copied, setCopied] = useState(false);
     const [activeSelect, setActiveSelect] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isGroupPremium, setIsGroupPremium] = useState(false);
+    const [lockedMessage, setLockedMessage] = useState<string | null>(null);
+
+    // O plano do GRUPO é sempre o de quem criou (adminId) — não o de quem
+    // está escolhendo no momento. Um membro premium dentro de um grupo
+    // criado por um usuário free continua sob as regras do free.
+    useEffect(() => {
+        const unsub = onSnapshot(doc(db, "users", group.adminId), (snap) => {
+            const ownerData = snap.data() as AppUser | undefined;
+            setIsGroupPremium(isPlanActive(ownerData?.plan, ownerData?.planExpiresAt));
+        });
+        return () => unsub();
+    }, [group.adminId]);
 
     const toggleSelect = (playerId: string) => {
         setActiveSelect(prev => prev === playerId ? null : playerId);
@@ -67,7 +91,8 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
     };
 
     const handleRandomAssign = (targetId: string) => {
-        const randomCeleb = ALL_CELEBS[Math.floor(Math.random() * ALL_CELEBS.length)];
+        const pool = isGroupPremium ? ALL_CELEBS : FREE_CELEBS;
+        const randomCeleb = pool[Math.floor(Math.random() * pool.length)];
         handleAssign(targetId, randomCeleb.name);
     };
 
@@ -77,6 +102,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
     };
 
     return (
+        <>
         <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center">
             <div className="w-full max-w-2xl p-6 flex flex-col min-h-screen">
 
@@ -209,32 +235,46 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                         {filteredCategories.length === 0 && (
                                             <p className="px-3 py-6 text-center text-xs text-slate-500">Nenhuma celebridade encontrada.</p>
                                         )}
-                                        {filteredCategories.map(category => (
-                                            <div key={category.id} className="mb-4">
-                                                <div className="px-3 py-1.5 text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                    <span>{category.icon}</span> {category.title}
+                                        {filteredCategories.map(category => {
+                                            const locked = category.premium && !isGroupPremium;
+                                            return (
+                                                <div key={category.id} className="mb-4">
+                                                    <div className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${locked ? 'text-amber-500' : 'text-indigo-400'}`}>
+                                                        <span>{category.icon}</span> {category.title}
+                                                        {locked && (
+                                                            <span className="flex items-center gap-1 ml-auto text-[9px] bg-amber-500/10 border border-amber-500/30 rounded-full px-2 py-0.5">
+                                                                <Lock size={9} /> Premium
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="grid grid-cols-1 gap-1">
+                                                        {category.items.map(celeb => (
+                                                            <button
+                                                                key={celeb.id}
+                                                                onClick={() => locked
+                                                                    ? setLockedMessage("Essa categoria é exclusiva do plano Premium. O plano vale pra rodada inteira: quem criou o grupo precisa ser Premium pra liberar.")
+                                                                    : handleAssign(player.id, celeb.name)
+                                                                }
+                                                                className={`flex items-center px-3 py-2.5 rounded-lg text-sm text-left transition-colors font-medium group ${
+                                                                    locked
+                                                                        ? 'text-slate-600 cursor-not-allowed opacity-60'
+                                                                        : player.assignedCeleb === celeb.name
+                                                                            ? 'bg-indigo-600 text-white'
+                                                                            : 'hover:bg-slate-800 text-slate-300'
+                                                                }`}
+                                                            >
+                                                                <div className={`w-1.5 h-1.5 rounded-full mr-3 transition-colors ${
+                                                                    player.assignedCeleb === celeb.name ? 'bg-white' : 'bg-slate-700 group-hover:bg-indigo-400'
+                                                                }`}></div>
+                                                                {celeb.name}
+                                                                {locked && <Lock size={12} className="ml-auto shrink-0" />}
+                                                                {!locked && player.assignedCeleb === celeb.name && <Check size={14} className="ml-auto" />}
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                                <div className="grid grid-cols-1 gap-1">
-                                                    {category.items.map(celeb => (
-                                                        <button
-                                                            key={celeb.id}
-                                                            onClick={() => handleAssign(player.id, celeb.name)}
-                                                            className={`flex items-center px-3 py-2.5 rounded-lg text-sm text-left transition-colors font-medium group ${
-                                                                player.assignedCeleb === celeb.name
-                                                                    ? 'bg-indigo-600 text-white'
-                                                                    : 'hover:bg-slate-800 text-slate-300'
-                                                            }`}
-                                                        >
-                                                            <div className={`w-1.5 h-1.5 rounded-full mr-3 transition-colors ${
-                                                                player.assignedCeleb === celeb.name ? 'bg-white' : 'bg-slate-700 group-hover:bg-indigo-400'
-                                                            }`}></div>
-                                                            {celeb.name}
-                                                            {player.assignedCeleb === celeb.name && <Check size={14} className="ml-auto" />}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
@@ -267,5 +307,18 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                 </div>
             </div>
         </div>
+
+        <AlertDialog open={!!lockedMessage} onOpenChange={(open) => !open && setLockedMessage(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Categoria Premium</AlertDialogTitle>
+                    <AlertDialogDescription>{lockedMessage}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogAction onClick={() => setLockedMessage(null)}>Entendi</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 }

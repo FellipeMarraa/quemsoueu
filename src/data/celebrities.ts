@@ -7,6 +7,7 @@ export interface Category {
     id: string;
     title: string;
     icon: string;
+    premium?: boolean;
     items: Celebrity[];
 }
 
@@ -112,6 +113,7 @@ export const CATEGORIES: Category[] = [
         id: 'influencers',
         title: 'Influenciadores e Criadores de Conteúdo',
         icon: '📱',
+        premium: true,
         items: [
             'Virginia Fonseca', 'Carlinhos Maia', 'Luva de Pedreiro', 'Inês Brasil', 'Bella Poarch',
             'Kim Kardashian', 'Kylie Jenner', 'MrBeast', 'PewDiePie', 'Zé Felipe',
@@ -123,6 +125,7 @@ export const CATEGORIES: Category[] = [
         id: 'artistas-escritores',
         title: 'Artistas, Pintores e Escritores',
         icon: '🎨',
+        premium: true,
         items: [
             'Pablo Picasso', 'Leonardo da Vinci', 'Vincent van Gogh', 'Salvador Dalí', 'Frida Kahlo',
             'Tarsila do Amaral', 'Cândido Portinari', 'Michelangelo', 'Claude Monet', 'Andy Warhol',
@@ -135,6 +138,7 @@ export const CATEGORIES: Category[] = [
         id: 'ciencia-historia',
         title: 'Cientistas, Pensadores e Líderes Históricos',
         icon: '🧠',
+        premium: true,
         items: [
             'Albert Einstein', 'Isaac Newton', 'Charles Darwin', 'Stephen Hawking', 'Marie Curie',
             'Nikola Tesla', 'Thomas Edison', 'Galileu Galilei', 'Santos Dumont', 'Oswaldo Cruz',
@@ -172,6 +176,7 @@ export const CATEGORIES: Category[] = [
         id: 'games',
         title: 'Personagens de Games',
         icon: '🎮',
+        premium: true,
         items: [
             'Mario', 'Luigi', 'Sonic', 'Pikachu', 'Link (Zelda)',
             'Kratos', 'Master Chief', 'Lara Croft', 'Geralt de Rivia', 'Cloud Strife',
@@ -184,6 +189,7 @@ export const CATEGORIES: Category[] = [
         id: 'anime',
         title: 'Anime e Mangá',
         icon: '🐲',
+        premium: true,
         items: [
             'Goku', 'Naruto', 'Luffy', 'Sasuke', 'Ichigo',
             'Light Yagami', 'L (Death Note)', 'Saitama', 'All Might', 'Deku',
@@ -209,6 +215,7 @@ export const CATEGORIES: Category[] = [
         id: 'terror',
         title: 'Personagens de Terror',
         icon: '🎃',
+        premium: true,
         items: [
             'Chucky', 'Pennywise', 'Freddy Krueger', 'Jason Voorhees', 'Michael Myers',
             'Ghostface', 'Anabelle', 'A Freira', 'Sadako (O Chamado)', 'Leatherface',
@@ -218,3 +225,4 @@ export const CATEGORIES: Category[] = [
 ];
 
 export const ALL_CELEBS = CATEGORIES.flatMap(cat => cat.items);
+export const FREE_CELEBS = CATEGORIES.filter(cat => !cat.premium).flatMap(cat => cat.items);
