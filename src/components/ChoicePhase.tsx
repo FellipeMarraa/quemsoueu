@@ -19,6 +19,7 @@ import {
     CheckCircle2,
     ChevronDown,
     Copy,
+    Dices,
     Lock,
     Play, Plus,
     RotateCcw,
@@ -68,6 +69,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
     const otherPlayers = group.members.filter((m) => m.id !== userId);
     const allChoicesDone = group.members.every((m) => m.assignedCeleb && m.assignedCeleb !== "");
     const chosenCount = group.members.filter((m) => m.assignedCeleb && m.assignedCeleb !== "").length;
+    const canStart = otherPlayers.length > 0 && (group.randomMode || allChoicesDone);
 
     const handleCopyLink = () => {
         const inviteLink = `${window.location.origin}?join=${group.id}`;
@@ -96,9 +98,30 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
         handleAssign(targetId, randomCeleb.name);
     };
 
+    const toggleRandomMode = async () => {
+        if (!isAdmin) return;
+        await updateDoc(doc(db, "groups", group.id), { randomMode: !group.randomMode });
+    };
+
     const startCountdown = async () => {
-        if (!allChoicesDone) return;
-        await updateDoc(doc(db, "groups", group.id), { status: 'STARTING', startingAt: Date.now() });
+        if (!canStart) return;
+        const groupRef = doc(db, "groups", group.id);
+
+        if (group.randomMode) {
+            const pool = isGroupPremium ? ALL_CELEBS : FREE_CELEBS;
+            await runTransaction(db, async (tx) => {
+                const snap = await tx.get(groupRef);
+                if (!snap.exists()) return;
+                const currentMembers = (snap.data() as Group).members;
+                const randomizedMembers = currentMembers.map((m) => ({
+                    ...m,
+                    assignedCeleb: pool[Math.floor(Math.random() * pool.length)].name
+                }));
+                tx.update(groupRef, { members: randomizedMembers, status: 'STARTING', startingAt: Date.now() });
+            });
+        } else {
+            await updateDoc(groupRef, { status: 'STARTING', startingAt: Date.now() });
+        }
     };
 
     return (
@@ -117,7 +140,9 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                     <div className="text-right">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">Sessão Ativa</span>
                         <h2 className="text-xl font-bold leading-none truncate max-w-[200px]">{group.name || 'Fase de Escolha'}</h2>
-                        <p className="text-[10px] font-bold text-slate-500 mt-1 font-mono">{chosenCount}/{group.members.length} escolheram</p>
+                        <p className="text-[10px] font-bold text-slate-500 mt-1 font-mono">
+                            {group.randomMode ? 'sorteio automático' : `${chosenCount}/${group.members.length} escolheram`}
+                        </p>
                     </div>
                 </header>
 
@@ -144,6 +169,36 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                     </div>
                 )}
 
+                {/* Modo Aleatório */}
+                {isAdmin ? (
+                    <button
+                        onClick={toggleRandomMode}
+                        className={`mb-8 p-4 rounded-2xl border flex items-center justify-between gap-4 transition-all text-left ${
+                            group.randomMode
+                                ? 'bg-indigo-600/10 border-indigo-500/30'
+                                : 'bg-slate-900/50 border-slate-800'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg shrink-0 ${group.randomMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-800 text-slate-500'}`}>
+                                <Dices size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">Sorteio Automático</p>
+                                <p className="text-[10px] text-slate-500 mt-0.5">Ao iniciar, cada jogador recebe um personagem aleatório</p>
+                            </div>
+                        </div>
+                        <div className={`w-11 h-6 rounded-full p-0.5 transition-all shrink-0 ${group.randomMode ? 'bg-indigo-600' : 'bg-slate-700'}`}>
+                            <div className={`w-5 h-5 rounded-full bg-white transition-transform ${group.randomMode ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                        </div>
+                    </button>
+                ) : group.randomMode && (
+                    <div className="mb-8 p-3 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 flex items-center gap-2 justify-center">
+                        <Dices size={14} className="text-indigo-400" />
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Sorteio automático ativado pelo anfitrião</p>
+                    </div>
+                )}
+
                 {/* Lista de Jogadores */}
                 <div className="flex-1 space-y-4 mb-24">
                     {otherPlayers.length === 0 ? (
@@ -158,7 +213,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                         otherPlayers.map((player) => (
                             <div key={player.id} className="relative group">
                                 <div className={`p-5 rounded-2xl border transition-all duration-300 ${
-                                    player.assignedCeleb
+                                    !group.randomMode && player.assignedCeleb
                                         ? 'bg-slate-900/50 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
                                         : 'bg-slate-900 border-slate-800'
                                 }`}>
@@ -166,10 +221,10 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                         <div className="relative shrink-0">
                                             <img
                                                 src={player.photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.name}`}
-                                                className={`w-14 h-14 rounded-full border-2 transition-colors duration-300 ${player.assignedCeleb ? 'border-emerald-500' : 'border-slate-800'}`}
+                                                className={`w-14 h-14 rounded-full border-2 transition-colors duration-300 ${!group.randomMode && player.assignedCeleb ? 'border-emerald-500' : 'border-slate-800'}`}
                                                 alt={player.name}
                                             />
-                                            {player.assignedCeleb && (
+                                            {!group.randomMode && player.assignedCeleb && (
                                                 <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1 border-2 border-slate-950 shadow-lg">
                                                     <CheckCircle2 size={12} className="text-white" />
                                                 </div>
@@ -177,7 +232,9 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-bold text-lg truncate">{player.name}</h3>
-                                            {player.assignedCeleb ? (
+                                            {group.randomMode ? (
+                                                <p className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.1em] mt-0.5">Pronto pro sorteio</p>
+                                            ) : player.assignedCeleb ? (
                                                 <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[11px] font-black uppercase tracking-wider mt-0.5">
                                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                                     {player.assignedCeleb}
@@ -187,32 +244,34 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                             )}
                                         </div>
 
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <button
-                                                onClick={() => handleRandomAssign(player.id)}
-                                                title="Escolher aleatoriamente"
-                                                className="p-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
-                                            >
-                                                <Shuffle size={16} />
-                                            </button>
+                                        {!group.randomMode && (
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    onClick={() => handleRandomAssign(player.id)}
+                                                    title="Escolher aleatoriamente"
+                                                    className="p-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
+                                                >
+                                                    <Shuffle size={16} />
+                                                </button>
 
-                                            {/* Botão Dinâmico: Escolher ou Alterar */}
-                                            <button
-                                                onClick={() => toggleSelect(player.id)}
-                                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
-                                                    player.assignedCeleb
-                                                        ? 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
-                                                        : 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700'
-                                                }`}
-                                            >
-                                                {player.assignedCeleb ? (
-                                                    <><RotateCcw size={16} /> Alterar</>
-                                                ) : (
-                                                    <><Plus size={16} /> Escolher</>
-                                                )}
-                                                <ChevronDown size={14} className={`transition-transform duration-300 ${activeSelect === player.id ? 'rotate-180' : ''}`} />
-                                            </button>
-                                        </div>
+                                                {/* Botão Dinâmico: Escolher ou Alterar */}
+                                                <button
+                                                    onClick={() => toggleSelect(player.id)}
+                                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                                                        player.assignedCeleb
+                                                            ? 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
+                                                            : 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700'
+                                                    }`}
+                                                >
+                                                    {player.assignedCeleb ? (
+                                                        <><RotateCcw size={16} /> Alterar</>
+                                                    ) : (
+                                                        <><Plus size={16} /> Escolher</>
+                                                    )}
+                                                    <ChevronDown size={14} className={`transition-transform duration-300 ${activeSelect === player.id ? 'rotate-180' : ''}`} />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -288,19 +347,19 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                         {isAdmin ? (
                             <button
                                 onClick={startCountdown}
-                                disabled={!allChoicesDone || otherPlayers.length === 0}
+                                disabled={!canStart}
                                 className={`w-full py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-2xl ${
-                                    allChoicesDone && otherPlayers.length > 0
+                                    canStart
                                         ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20 border-b-4 border-emerald-800'
                                         : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed opacity-50'
                                 }`}
                             >
-                                <Play size={20} fill={allChoicesDone && otherPlayers.length > 0 ? "currentColor" : "none"} />
+                                <Play size={20} fill={canStart ? "currentColor" : "none"} />
                                 COMEÇAR RODADA
                             </button>
                         ) : (
                             <div className="w-full py-4 rounded-2xl bg-slate-900 border border-slate-800 text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">
-                                {allChoicesDone ? "Aguardando ADM iniciar..." : "Aguardando escolhas..."}
+                                {canStart ? "Aguardando ADM iniciar..." : "Aguardando escolhas..."}
                             </div>
                         )}
                     </div>

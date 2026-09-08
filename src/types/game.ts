@@ -19,6 +19,7 @@ export interface Group {
     currentRound?: number;
     startingAt?: number;
     createdAt?: Date;
+    randomMode?: boolean;
 }
 
 export interface AppUser {
