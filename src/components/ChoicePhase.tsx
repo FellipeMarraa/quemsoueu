@@ -217,39 +217,41 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                         ? 'bg-slate-900/50 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
                                         : 'bg-slate-900 border-slate-800'
                                 }`}>
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative shrink-0">
-                                            <img
-                                                src={player.photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.name}`}
-                                                className={`w-14 h-14 rounded-full border-2 transition-colors duration-300 ${!group.randomMode && player.assignedCeleb ? 'border-emerald-500' : 'border-slate-800'}`}
-                                                alt={player.name}
-                                            />
-                                            {!group.randomMode && player.assignedCeleb && (
-                                                <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1 border-2 border-slate-950 shadow-lg">
-                                                    <CheckCircle2 size={12} className="text-white" />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-lg truncate">{player.name}</h3>
-                                            {group.randomMode ? (
-                                                <p className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.1em] mt-0.5">Pronto pro sorteio</p>
-                                            ) : player.assignedCeleb ? (
-                                                <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[11px] font-black uppercase tracking-wider mt-0.5">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                    {player.assignedCeleb}
-                                                </div>
-                                            ) : (
-                                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.1em] mt-0.5">Aguardando celebridade</p>
-                                            )}
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center gap-4 min-w-0">
+                                            <div className="relative shrink-0">
+                                                <img
+                                                    src={player.photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.name}`}
+                                                    className={`w-14 h-14 rounded-full border-2 transition-colors duration-300 ${!group.randomMode && player.assignedCeleb ? 'border-emerald-500' : 'border-slate-800'}`}
+                                                    alt={player.name}
+                                                />
+                                                {!group.randomMode && player.assignedCeleb && (
+                                                    <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1 border-2 border-slate-950 shadow-lg">
+                                                        <CheckCircle2 size={12} className="text-white" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-bold text-lg truncate">{player.name}</h3>
+                                                {group.randomMode ? (
+                                                    <p className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.1em] mt-0.5">Pronto pro sorteio</p>
+                                                ) : player.assignedCeleb ? (
+                                                    <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[11px] font-black uppercase tracking-wider mt-0.5 truncate">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                                                        <span className="truncate">{player.assignedCeleb}</span>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.1em] mt-0.5">Aguardando celebridade</p>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {!group.randomMode && (
-                                            <div className="flex items-center gap-2 shrink-0">
+                                            <div className="flex items-center gap-2">
                                                 <button
                                                     onClick={() => handleRandomAssign(player.id)}
                                                     title="Escolher aleatoriamente"
-                                                    className="p-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
+                                                    className="p-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-white transition-all shrink-0"
                                                 >
                                                     <Shuffle size={16} />
                                                 </button>
@@ -257,7 +259,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                                 {/* Botão Dinâmico: Escolher ou Alterar */}
                                                 <button
                                                     onClick={() => toggleSelect(player.id)}
-                                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                                                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
                                                         player.assignedCeleb
                                                             ? 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
                                                             : 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700'
