@@ -21,7 +21,7 @@ import {
   signInWithPopup,
   signInWithRedirect
 } from 'firebase/auth';
-import {Crown, DoorOpen, Gamepad2, Hash, LogIn, LogOut, PlayCircle, Plus, Trash2, Users} from 'lucide-react';
+import {Crown, DoorOpen, Gamepad2, Hash, LogIn, LogOut, PlayCircle, Plus, Search, Trash2, Users} from 'lucide-react';
 
 // Importação dos componentes de fase
 import ChoicePhase from './components/ChoicePhase';
@@ -29,6 +29,7 @@ import InGameDashboard from './components/InGameDashboard';
 import RoundResult from './components/RoundResult';
 import type {AppUser, Group, Player} from './types/game';
 import {isPlanActive} from './lib/plan';
+import {getDetectiveSsoUrl} from './lib/detectiveSso';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -302,6 +303,16 @@ export default function App() {
     }
   };
 
+  const handlePlayDetective = async () => {
+    try {
+      const url = await getDetectiveSsoUrl();
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error("Erro ao abrir o Criminal Minds:", error);
+      setErrorMessage("Não foi possível abrir o Criminal Minds agora. Tente de novo.");
+    }
+  };
+
   const handleUpgrade = async () => {
     if (!user) return;
     try {
@@ -492,6 +503,13 @@ export default function App() {
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                <button
+                    onClick={handlePlayDetective}
+                    title="Jogar Criminal Minds"
+                    className="flex items-center gap-1.5 rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-xs font-black uppercase tracking-widest text-red-400 hover:bg-red-500/20 transition-all whitespace-nowrap"
+                >
+                  <Search size={14} /> Detetive Online
+                </button>
                 {!isPlanActive(user.plan, user.planExpiresAt) && (
                     <button
                         onClick={handleUpgrade}
