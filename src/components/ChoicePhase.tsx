@@ -14,6 +14,13 @@ import {
     AlertDialogTitle
 } from './ui/alert-dialog';
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle
+} from './ui/dialog';
+import {
     ArrowLeft,
     Check,
     CheckCircle2,
@@ -58,6 +65,11 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
         setSearchTerm('');
     };
 
+    const closeSelect = () => {
+        setActiveSelect(null);
+        setSearchTerm('');
+    };
+
     const normalizedSearch = searchTerm.trim().toLowerCase();
     const filteredCategories = CATEGORIES
         .map(category => ({
@@ -67,6 +79,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
         .filter(category => category.items.length > 0);
 
     const otherPlayers = group.members.filter((m) => m.id !== userId);
+    const activePlayer = otherPlayers.find((p) => p.id === activeSelect) ?? null;
     const allChoicesDone = group.members.every((m) => m.assignedCeleb && m.assignedCeleb !== "");
     const chosenCount = group.members.filter((m) => m.assignedCeleb && m.assignedCeleb !== "").length;
     const canStart = otherPlayers.length > 0 && (group.randomMode || allChoicesDone);
@@ -211,7 +224,7 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                         </div>
                     ) : (
                         otherPlayers.map((player) => (
-                            <div key={player.id} className="relative group">
+                            <div key={player.id}>
                                 <div className={`p-5 rounded-2xl border transition-all duration-300 ${
                                     !group.randomMode && player.assignedCeleb
                                         ? 'bg-slate-900/50 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
@@ -276,68 +289,6 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                                         )}
                                     </div>
                                 </div>
-
-                                {/* Custom Dropdown Seletor */}
-                                {activeSelect === player.id && (
-                                    <div className="absolute top-full left-0 right-0 z-50 mt-2 p-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-80 overflow-y-auto custom-scrollbar border-indigo-500/20">
-                                        <div className="sticky top-0 bg-slate-900 pb-2 border-b border-slate-800 mb-2 px-2">
-                                            <div className="flex items-center gap-2 text-slate-500 py-2">
-                                                <Search size={14} />
-                                                <input
-                                                    type="text"
-                                                    placeholder="Procurar..."
-                                                    className="bg-transparent border-none outline-none text-[10px] font-bold uppercase tracking-widest w-full text-slate-200"
-                                                    autoFocus
-                                                    value={searchTerm}
-                                                    onChange={e => setSearchTerm(e.target.value)}
-                                                />
-                                            </div>
-                                        </div>
-                                        {filteredCategories.length === 0 && (
-                                            <p className="px-3 py-6 text-center text-xs text-slate-500">Nenhuma celebridade encontrada.</p>
-                                        )}
-                                        {filteredCategories.map(category => {
-                                            const locked = category.premium && !isGroupPremium;
-                                            return (
-                                                <div key={category.id} className="mb-4">
-                                                    <div className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${locked ? 'text-amber-500' : 'text-indigo-400'}`}>
-                                                        <span>{category.icon}</span> {category.title}
-                                                        {locked && (
-                                                            <span className="flex items-center gap-1 ml-auto text-[9px] bg-amber-500/10 border border-amber-500/30 rounded-full px-2 py-0.5">
-                                                                <Lock size={9} /> Premium
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="grid grid-cols-1 gap-1">
-                                                        {category.items.map(celeb => (
-                                                            <button
-                                                                key={celeb.id}
-                                                                onClick={() => locked
-                                                                    ? setLockedMessage("Essa categoria é exclusiva do plano Premium. O plano vale pra rodada inteira: quem criou o grupo precisa ser Premium pra liberar.")
-                                                                    : handleAssign(player.id, celeb.name)
-                                                                }
-                                                                className={`flex items-center px-3 py-2.5 rounded-lg text-sm text-left transition-colors font-medium group ${
-                                                                    locked
-                                                                        ? 'text-slate-600 cursor-not-allowed opacity-60'
-                                                                        : player.assignedCeleb === celeb.name
-                                                                            ? 'bg-indigo-600 text-white'
-                                                                            : 'hover:bg-slate-800 text-slate-300'
-                                                                }`}
-                                                            >
-                                                                <div className={`w-1.5 h-1.5 rounded-full mr-3 transition-colors ${
-                                                                    player.assignedCeleb === celeb.name ? 'bg-white' : 'bg-slate-700 group-hover:bg-indigo-400'
-                                                                }`}></div>
-                                                                {celeb.name}
-                                                                {locked && <Lock size={12} className="ml-auto shrink-0" />}
-                                                                {!locked && player.assignedCeleb === celeb.name && <Check size={14} className="ml-auto" />}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
                             </div>
                         ))
                     )}
@@ -368,6 +319,76 @@ export default function ChoicePhase({ group, userId }: ChoicePhaseProps) {
                 </div>
             </div>
         </div>
+
+        <Dialog open={!!activeSelect} onOpenChange={(open) => !open && closeSelect()}>
+            <DialogContent className="max-h-[85vh] flex flex-col p-4">
+                <DialogHeader>
+                    <DialogTitle>Escolher para {activePlayer?.name}</DialogTitle>
+                    <DialogDescription>Qual personagem essa pessoa vai tentar adivinhar?</DialogDescription>
+                </DialogHeader>
+
+                <div className="flex items-center gap-2 text-slate-500 bg-slate-800/50 rounded-xl px-3 py-2.5 shrink-0">
+                    <Search size={14} />
+                    <input
+                        type="text"
+                        placeholder="Procurar..."
+                        className="bg-transparent border-none outline-none text-sm font-medium w-full text-slate-200"
+                        autoFocus
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                    />
+                </div>
+
+                <div className="overflow-y-auto flex-1 -mx-1 px-1">
+                    {filteredCategories.length === 0 && (
+                        <p className="px-3 py-6 text-center text-xs text-slate-500">Nenhuma celebridade encontrada.</p>
+                    )}
+                    {filteredCategories.map(category => {
+                        const locked = category.premium && !isGroupPremium;
+                        return (
+                            <div key={category.id} className="mb-4">
+                                <div className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${locked ? 'text-amber-500' : 'text-indigo-400'}`}>
+                                    <span>{category.icon}</span> {category.title}
+                                    {locked && (
+                                        <span className="flex items-center gap-1 ml-auto text-[9px] bg-amber-500/10 border border-amber-500/30 rounded-full px-2 py-0.5">
+                                            <Lock size={9} /> Premium
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-1 gap-1">
+                                    {category.items.map(celeb => (
+                                        <button
+                                            key={celeb.id}
+                                            onClick={() => {
+                                                if (locked) {
+                                                    setLockedMessage("Essa categoria é exclusiva do plano Premium. O plano vale pra rodada inteira: quem criou o grupo precisa ser Premium pra liberar.");
+                                                } else if (activeSelect) {
+                                                    handleAssign(activeSelect, celeb.name);
+                                                }
+                                            }}
+                                            className={`flex items-center px-3 py-2.5 rounded-lg text-sm text-left transition-colors font-medium group ${
+                                                locked
+                                                    ? 'text-slate-600 cursor-not-allowed opacity-60'
+                                                    : activePlayer?.assignedCeleb === celeb.name
+                                                        ? 'bg-indigo-600 text-white'
+                                                        : 'hover:bg-slate-800 text-slate-300'
+                                            }`}
+                                        >
+                                            <div className={`w-1.5 h-1.5 rounded-full mr-3 transition-colors ${
+                                                activePlayer?.assignedCeleb === celeb.name ? 'bg-white' : 'bg-slate-700 group-hover:bg-indigo-400'
+                                            }`}></div>
+                                            {celeb.name}
+                                            {locked && <Lock size={12} className="ml-auto shrink-0" />}
+                                            {!locked && activePlayer?.assignedCeleb === celeb.name && <Check size={14} className="ml-auto" />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </DialogContent>
+        </Dialog>
 
         <AlertDialog open={!!lockedMessage} onOpenChange={(open) => !open && setLockedMessage(null)}>
             <AlertDialogContent>
