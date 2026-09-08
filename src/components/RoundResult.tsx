@@ -82,7 +82,7 @@ export default function RoundResult({ group, userId }: RoundResultProps) {
                                     className="w-8 h-8 rounded-full border border-slate-800"
                                     alt={member.name}
                                 />
-                                <p className="flex-1 min-w-0 text-sm font-medium truncate">{member.name}</p>
+                                <p className="flex-1 min-w-0 text-sm font-medium text-slate-200 truncate">{member.name}</p>
                                 <span className="text-sm font-black text-slate-300 shrink-0">{member.totalPoints ?? 0} pts</span>
                             </div>
                         ))}
