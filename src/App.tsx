@@ -484,7 +484,7 @@ export default function App() {
         <>
         <div className="min-h-screen w-full bg-slate-950 text-white p-4 md:p-8 flex flex-col items-center overflow-y-auto">
           <div className="w-full max-w-2xl">
-            <header className="mb-10 flex items-center justify-between rounded-3xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl">
+            <header className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl">
               <div className="flex items-center gap-4 min-w-0">
                 <UserAvatar src={user.photo} name={user.name} />
                 <div className="min-w-0">
@@ -502,7 +502,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                     onClick={handlePlayDetective}
                     title="Jogar Criminal Minds"
