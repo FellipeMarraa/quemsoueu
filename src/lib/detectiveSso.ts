@@ -1,6 +1,6 @@
 import { auth } from "./firebase";
 
-const CRIMINAL_MINDS_URL = "https://criminal-minds.vercel.app";
+const CRIMINAL_MINDS_URL = "https://criminal-mind.vercel.app";
 
 export async function getDetectiveSsoUrl(): Promise<string> {
     const idToken = await auth.currentUser?.getIdToken();

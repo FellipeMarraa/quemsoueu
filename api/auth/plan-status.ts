@@ -22,7 +22,7 @@ if (!admin.apps.length) {
 // status de plano. Inclui localhost pra dar pra testar o SSO/sync em dev
 // sem precisar de deploy; nunca ecoa uma origem fora da lista.
 const ALLOWED_ORIGINS = [
-    "https://criminal-minds.vercel.app",
+    "https://criminal-mind.vercel.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ];
